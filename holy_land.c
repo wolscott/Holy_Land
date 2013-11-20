@@ -52,7 +52,7 @@ typedef struct {
 }loc_map;
 
 //prototypes
-location get_location( FILE* locations, long address );
+location get_location( FILE* locations, long address, loc_map map[MAX_LOCATIONS], influence exp[EXP_NUM] );
 void print_location( location );
 void print_options( option[MAX_OPTIONS] );
 void get_options( FILE* locations, option opts[MAX_OPTIONS] );
@@ -64,6 +64,7 @@ location reset_location( void );
 void print_experiences( influence experiences[EXP_NUM] );
 void update_experiences( influence experiences[EXP_NUM], influence effects[MAX_EFFECTS] );
 void init_exp( influence exp[EXP_NUM] );
+int test_exp( influence test, influence exp[EXP_NUM] );
 
 //being main
 int main(){
@@ -81,7 +82,7 @@ int main(){
 	location current_location;// = get_location( locations, map[0].offset );
 	while( alive == 1 ){
 		current_location = reset_location();
-		current_location = get_location( locations, address );
+		current_location = get_location( locations, address, map, experiences );
 		update_experiences( experiences, current_location.effects );
 		print_experiences( experiences );
 		print_location( current_location );
@@ -99,6 +100,18 @@ int main(){
 	fclose( locations );
 	locations = fopen( LOC_SOURCE, "r" );
 	print_location( current_location );
+}
+
+int test_exp( influence test, influence exp[EXP_NUM] ){
+	int i;
+	for( i = 0; i < EXP_NUM; i++ ){
+		if( strcmp( test.keyword, exp[i].keyword ) == 0 ){
+			if( test.increase <= exp[i].increase ){
+				return 1;
+			}
+		}
+	}
+	return 0;
 }
 
 void init_exp( influence exp[EXP_NUM] ){
@@ -134,9 +147,11 @@ location reset_location(){
 	location blank;
 	blank.loc_id = 0;
 	strcpy( blank.body, "" );
-	int i;
+	int i, j;
 	for( i = 0; i < EXP_NUM; i++ ){
-		blank.effects[i].keyword[0] = '?';
+		for( j = 0; j < KEY_LEN; j++ ){
+			blank.effects[i].keyword[j] = '?';
+		}
 		blank.effects[i].increase = 0;
 	}
 	return blank;
@@ -179,22 +194,36 @@ void init_loc_map( FILE* locations, loc_map map[MAX_LOCATIONS] ){
 	}
 }
 
-location get_location( FILE* locations, long offset ){
-	location new_location;
+location get_location( FILE* locations, long offset, loc_map map[MAX_LOCATIONS], influence exp[EXP_NUM] ){
+	location new_l;
 	fseek( locations, offset, SEEK_SET ); //seek to the start of the desired location
-	fscanf( locations, "%d%d", &new_location.loc_id, &new_location.year );
+	fscanf( locations, "%d%d", &new_l.loc_id, &new_l.year );
 	int c, effect = 0;
-	char* tempptr = new_location.body;
+	char* tempptr = new_l.body;
+	//char* token;
 	while( (c = fgetc( locations ) ) != '#' ){
+		//if( c == '[' ) { //start effects block
+		//	while( (c = fgetc( locations ) ) != ']' ){
 		if( c == '^' && effect < MAX_EFFECTS ){
-			fscanf( locations, "%s%d", new_location.effects[effect].keyword, &new_location.effects[effect].increase );
-		} else {
+			fscanf( locations, "%s%d", new_l.effects[effect].keyword, &new_l.effects[effect].increase );
+			printf( "\neffect dectected - keyword: %s, value: %d\n", new_l.effects[effect].keyword, new_l.effects[effect].increase );
+			effect++;
+		} else if( c == '?' ){ //conditional redirect
+			influence test;
+			int new_go_to;
+			fscanf( locations, "%s%d%d", test.keyword, &test.increase, &new_go_to );
+			if( test_exp( test, exp ) ){
+				int address = get_address( new_go_to, map );
+				return get_location( locations, address, map, exp );
+			} 
+		}
+		if( c != '^' && c != '?' ) {
 			*(tempptr++) = c;
 		}
 	}
 	*tempptr = '\0';
-	get_options( locations, new_location.opts );
-	return new_location;
+	get_options( locations, new_l.opts );
+	return new_l;
 }
 
 void get_options( FILE* locations, option opts[MAX_OPTIONS] ){

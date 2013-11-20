@@ -10,3 +10,31 @@ this next character is the sentinal#
 ^courage 3This is a description of the second location#
 1 1 go back to the first location!#
 0
+
+@3 1
+^compassion 1This is the third location#
+1 2 Go to location 2#
+2 1 go to location 1#
+3 4 go to location 4#
+0
+
+@4 1
+^courage -1^compassion 2you are standing outside a church#
+1 5 go inside the church#
+2 3 go back to the 3rd location#
+0
+
+@5 1
+You enter the church#
+1 6 kneel and pray#
+2 4 leave the church#
+0
+
+@6 1^religion 1?religion 8 7You pray#
+1 6 Continue praying#
+2 4 leave the church#
+0
+
+@7 1 you  made it to heaven!#
+1 5 go back to church(why?)#
+0
