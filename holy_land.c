@@ -12,7 +12,7 @@
 #define MAX_LOCATIONS 10
 #define KEY_LEN 10
 #define MAX_EFFECTS 3
-#define EXP_NUM 10
+#define EXP_NUM 5 
 
 /*the 'option' structure is used to for storing and displaying menu options
  */
@@ -79,6 +79,7 @@ int main(){
 	int alive = 1;
 	influence experiences[EXP_NUM];
 	init_exp( experiences );
+	print_experiences( experiences );
 	location current_location;// = get_location( locations, map[0].offset );
 	while( alive == 1 ){
 		current_location = reset_location();
@@ -115,9 +116,11 @@ int test_exp( influence test, influence exp[EXP_NUM] ){
 }
 
 void init_exp( influence exp[EXP_NUM] ){
-	int i;
+	int i, j;
 	for( i = 0; i < EXP_NUM; i++ ){
-		exp[i].keyword[0] = '?';
+		for( j = 0; j < KEY_LEN; j++ ){
+			exp[i].keyword[j] = '?';
+		}
 	}
 }
 
@@ -125,7 +128,7 @@ void update_experiences( influence exp[EXP_NUM], influence effects[MAX_EFFECTS] 
 	int i, j;
 	for( i = 0; i < MAX_EFFECTS; i++ ){
 		for( j = 0; j < EXP_NUM; j++ ){			 
-			if( exp[j].keyword[0] == '?' ){
+			if( exp[j].keyword[0] == '?' && effects[i].keyword[0] != '\0' ){
 				strcpy( exp[j].keyword, effects[i].keyword );
 			}
 			if( strcmp( exp[j].keyword, effects[i].keyword ) == 0 ){
@@ -139,7 +142,7 @@ void update_experiences( influence exp[EXP_NUM], influence effects[MAX_EFFECTS] 
 void print_experiences( influence exp[EXP_NUM] ){
 	int i;
 	for( i = 0; i < EXP_NUM; i++ ){
-		printf( "%s - %d\n", exp[i].keyword, exp[i].increase );
+		printf( "exp i: %d %s - %d\n", i, exp[i].keyword, exp[i].increase );
 	}
 }
 
@@ -148,9 +151,9 @@ location reset_location(){
 	blank.loc_id = 0;
 	strcpy( blank.body, "" );
 	int i, j;
-	for( i = 0; i < EXP_NUM; i++ ){
+	for( i = 0; i < MAX_EFFECTS; i++ ){
 		for( j = 0; j < KEY_LEN; j++ ){
-			blank.effects[i].keyword[j] = '?';
+			blank.effects[i].keyword[j] = '\0';
 		}
 		blank.effects[i].increase = 0;
 	}
@@ -195,7 +198,7 @@ void init_loc_map( FILE* locations, loc_map map[MAX_LOCATIONS] ){
 }
 
 location get_location( FILE* locations, long offset, loc_map map[MAX_LOCATIONS], influence exp[EXP_NUM] ){
-	location new_l;
+	location new_l = reset_location();
 	fseek( locations, offset, SEEK_SET ); //seek to the start of the desired location
 	fscanf( locations, "%d%d", &new_l.loc_id, &new_l.year );
 	int c, effect = 0;
