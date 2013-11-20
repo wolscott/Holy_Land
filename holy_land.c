@@ -3,26 +3,49 @@
 //don't expect much, it's shitty
 
 #include <stdio.h>
+#include <string.h>
 
 #define MAX_OPTIONS 5 //max number of options at a location
 #define LOC_SOURCE "locations.txt"
 #define BODY_LEN 1000
 #define MAX_OPT_BODY 1000
 #define MAX_LOCATIONS 10
+#define KEY_LEN 10
+#define MAX_EFFECTS 3
+#define EXP_NUM 10
 
+/*the 'option' structure is used to for storing and displaying menu options
+ */
 typedef struct {
-	int opt_num;
-	int go_to;
-	char opt_body[MAX_OPT_BODY];
+	int opt_num; //number entered to select the option
+	int go_to; //location id that this option will return
+	char opt_body[MAX_OPT_BODY]; //description of this option
 } option;
 
+/* the 'influence' structure is used to associate keywords with bonuses to 
+ * the status associated with those keywords
+ */
 typedef struct {
-	int year;
-	int loc_id;
-	char body[BODY_LEN];
-	option opts[MAX_OPTIONS]; //5 by default
+	char keyword[KEY_LEN]; //this keyword will be increment
+	int increase; //by this much
+} influence;
+
+/* the 'location' structure is the core of this game engine. It is used to store
+ * information from the locations.txt data file containing the game's story, and 
+ * the possible gameplay options
+ */
+typedef struct {
+	int year; //the year this location takes place
+	int loc_id; //unique location id, used for moving between locations
+	influence effects[MAX_EFFECTS]; //effects from traveling to this location
+	char body[BODY_LEN];// description of this location
+	option opts[MAX_OPTIONS]; //options that can be selected at this location
 } location;
 
+/* the loc_map structure is used to associate each unique loc_id with a position
+ * in the file. an array of loc_map structs is generated at the begginning 
+ * of main to allow the program to jump to parts of the file as needed
+ */
 typedef struct {
 	int loc_id;
 	long offset;
@@ -37,7 +60,12 @@ void init_loc_map( FILE* locations, loc_map map[MAX_LOCATIONS] );
 int parse_input( int input, option opts[MAX_OPTIONS] );
 long get_address( int go_to, loc_map map[MAX_LOCATIONS] );
 void print_loc_map( loc_map map[MAX_LOCATIONS] );
+location reset_location( void );
+void print_experiences( influence experiences[EXP_NUM] );
+void update_experiences( influence experiences[EXP_NUM], influence effects[MAX_EFFECTS] );
+void init_exp( influence exp[EXP_NUM] );
 
+//being main
 int main(){
 	puts( "Welcome to Holy Land" );
 	FILE* locations = fopen( LOC_SOURCE, "r" );
@@ -48,9 +76,14 @@ int main(){
 	long address = map[0].offset; // get_address( go_to, map );
 	int input, go_to;
 	int alive = 1;
+	influence experiences[EXP_NUM];
+	init_exp( experiences );
 	location current_location;// = get_location( locations, map[0].offset );
 	while( alive == 1 ){
+		current_location = reset_location();
 		current_location = get_location( locations, address );
+		update_experiences( experiences, current_location.effects );
+		print_experiences( experiences );
 		print_location( current_location );
 		printf( "What will you do?: ");
 		scanf( "%d", &input );
@@ -66,6 +99,47 @@ int main(){
 	fclose( locations );
 	locations = fopen( LOC_SOURCE, "r" );
 	print_location( current_location );
+}
+
+void init_exp( influence exp[EXP_NUM] ){
+	int i;
+	for( i = 0; i < EXP_NUM; i++ ){
+		exp[i].keyword[0] = '?';
+	}
+}
+
+void update_experiences( influence exp[EXP_NUM], influence effects[MAX_EFFECTS] ){
+	int i, j;
+	for( i = 0; i < MAX_EFFECTS; i++ ){
+		for( j = 0; j < EXP_NUM; j++ ){			 
+			if( exp[j].keyword[0] == '?' ){
+				strcpy( exp[j].keyword, effects[i].keyword );
+			}
+			if( strcmp( exp[j].keyword, effects[i].keyword ) == 0 ){
+				exp[j].increase += effects[i].increase;
+				break;
+			}
+		}
+		
+	}
+}
+void print_experiences( influence exp[EXP_NUM] ){
+	int i;
+	for( i = 0; i < EXP_NUM; i++ ){
+		printf( "%s - %d\n", exp[i].keyword, exp[i].increase );
+	}
+}
+
+location reset_location(){
+	location blank;
+	blank.loc_id = 0;
+	strcpy( blank.body, "" );
+	int i;
+	for( i = 0; i < EXP_NUM; i++ ){
+		blank.effects[i].keyword[0] = '?';
+		blank.effects[i].increase = 0;
+	}
+	return blank;
 }
 
 void print_loc_map( loc_map map[MAX_LOCATIONS] ){
@@ -107,22 +181,19 @@ void init_loc_map( FILE* locations, loc_map map[MAX_LOCATIONS] ){
 
 location get_location( FILE* locations, long offset ){
 	location new_location;
-	//printf("%p", locations );
-	fseek( locations, offset, SEEK_SET );
-/*	if( fgetc( locations ) != '@' ){
-		puts("this is not the start of a location");
-	}*/
+	fseek( locations, offset, SEEK_SET ); //seek to the start of the desired location
 	fscanf( locations, "%d%d", &new_location.loc_id, &new_location.year );
-	int c;
-	//char temp[100];
+	int c, effect = 0;
 	char* tempptr = new_location.body;
 	while( (c = fgetc( locations ) ) != '#' ){
-		*(tempptr++) = c;
+		if( c == '^' && effect < MAX_EFFECTS ){
+			fscanf( locations, "%s%d", new_location.effects[effect].keyword, &new_location.effects[effect].increase );
+		} else {
+			*(tempptr++) = c;
+		}
 	}
 	*tempptr = '\0';
-	//new_location.body = temp;
 	get_options( locations, new_location.opts );
-	//printf("%p", locations );
 	return new_location;
 }
 
@@ -144,6 +215,7 @@ void get_options( FILE* locations, option opts[MAX_OPTIONS] ){
 		
 void print_location( location ltp ){
 	printf( "The year is %d, you are at location %d:%s\n", ltp.year, ltp.loc_id, ltp.body );
+	printf( "first keyword: %s, increment: %d\n", ltp.effects[0].keyword, ltp.effects[0].increase );
 	print_options( ltp.opts );
 }
 

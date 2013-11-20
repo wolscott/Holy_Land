@@ -7,6 +7,6 @@ this next character is the sentinal#
 0
 
 @2 1
-This is a description of the second location#
+^courage 3This is a description of the second location#
 1 1 go back to the first location!#
 0
