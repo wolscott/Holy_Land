@@ -45,29 +45,33 @@ int main(){
 	init_loc_map( locations, map );
 	print_loc_map( map );
 	rewind( locations );
-	location current_location = get_location( locations, map[0].offset );
-	print_location( current_location );
-//	printf("%p", locations );
-	fclose( locations );
-	printf( "What will you do?: ");
+	long address = map[0].offset; // get_address( go_to, map );
 	int input, go_to;
-	scanf( "%d", &input );
-	go_to = parse_input( input, current_location.opts );
-	while ( go_to == 0 ){
-		printf( "Not a valid input, please select from the above options: ");
+	int alive = 1;
+	location current_location;// = get_location( locations, map[0].offset );
+	while( alive == 1 ){
+		current_location = get_location( locations, address );
+		print_location( current_location );
+		printf( "What will you do?: ");
 		scanf( "%d", &input );
 		go_to = parse_input( input, current_location.opts );
+		while ( go_to == 0 ){
+			printf( "Not a valid input, please select from the above options: ");
+			scanf( "%d", &input );
+			go_to = parse_input( input, current_location.opts );
+		}
+		address = get_address( go_to, map );
 	}
-	long address = get_address( go_to, map );
+//	printf("%p", locations );
+	fclose( locations );
 	locations = fopen( LOC_SOURCE, "r" );
-	current_location = get_location( locations, address );
 	print_location( current_location );
 }
 
 void print_loc_map( loc_map map[MAX_LOCATIONS] ){
 	int i;
 	for( i = 0; i < MAX_LOCATIONS; i++ ){
-		printf("location %d is at %d\n", map[i].loc_id, map[i].offset );
+		printf("location %d is at %ld\n", map[i].loc_id, map[i].offset );
 	}
 }
 
