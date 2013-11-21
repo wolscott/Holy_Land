@@ -1,3 +1,4 @@
+&1
 @1 1
 This is the description of the first location,
 this next character is the sentinal#
@@ -38,3 +39,8 @@ You enter the church#
 @7 1 you  made it to heaven!#
 1 5 go back to church(why?)#
 0
+
+&2
+
+@1 The first location of year 2!#
+1 1 stay here#
