@@ -31,7 +31,7 @@ You enter the church#
 2 4 leave the church#
 0
 
-@6 1^religion 1?religion 8 7You pray#
+@6 1^religion 1^time 3?religion 8 7You pray#
 1 6 Continue praying#
 2 4 leave the church#
 0
@@ -44,3 +44,4 @@ You enter the church#
 
 @1 The first location of year 2!#
 1 1 stay here#
+0

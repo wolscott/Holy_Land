@@ -82,7 +82,7 @@ int test_exp( pair test, pair exp[EXP_NUM] );
 void make_year_map( FILE* locations, loc_map map[MAX_YEARS] );
 void print_year_map( loc_map map[MAX_YEARS] );
 void get_locs( FILE* l_file, long offset, location locs[MAX_LOCS] );
-int do_condreds( pair experiences[EXP_NUM], cond condreds[MAX_CONDREDS] );
+int do_condreds( pair experiences[EXP_NUM], cond condreds[MAX_CONDREDS], int num_condreds );
 //being main
 int main(){
 	puts( "Welcome to Holy Land" );
@@ -93,34 +93,72 @@ int main(){
 	make_year_map( l_file, year_map );
 	fclose( l_file );
 	//create an array of location strucs
-	long address = year_map[1].offset; // get_address( go_to, map );
+	long address; // get_address( go_to, map );
 	location locs[MAX_LOCS];
-	l_file = fopen( LOC_SOURCE, "r" );
-	get_locs( l_file, address, locs );
-	fclose( l_file );
-	int input, go_to=1;
-	int alive = 1;
 	pair experiences[EXP_NUM];
 	init_exp( experiences );
-	print_experiences( experiences );
 	location current_location;
-	while( alive == 1 ){
-		current_location = locs[go_to];
-		update_experiences( experiences, current_location.effects );
-		go_to = do_condreds( experiences, current_location.condreds );
-		if( go_to == 0 ){
-			print_experiences( experiences );
-			print_location( current_location );
-			printf( "What will you do?: ");
-			scanf( "%d", &input );
-			go_to = parse_input( input, current_location.opts );
-			while ( go_to == 0 ){
-				printf( "Not a valid input, please select from the above options: ");
+	int input, go_to=1;
+	int alive = 1;
+	int gameon = 1;
+	int year = 0;
+	int next_year;
+	pair reset_time;
+	strcpy( reset_time.keyword, "time" );
+	reset_time.value = 0;
+	cond timelimit[1];
+	strcpy( timelimit[0].keyword, "time");
+	timelimit[0].value = 17;
+	timelimit[0].new_go = 1;
+	while( gameon == 1){
+		year++;
+		go_to = 1;
+		address = year_map[year].offset;
+		if( year > 1 && address == 0 ){
+			gameon = 0;
+			break;
+		}
+		l_file = fopen( LOC_SOURCE, "r" );
+		get_locs( l_file, address, locs );
+		fclose( l_file );
+		next_year = 0;
+		if( !set_exp( experiences, reset_time )){
+			puts( "time error");
+		}
+	//print_experiences( experiences );
+		while( next_year == 0 ){
+			current_location = locs[go_to];
+			update_experiences( experiences, current_location.effects );
+			go_to = do_condreds( experiences, current_location.condreds, MAX_CONDREDS );
+			if( go_to == 0 ){
+				print_experiences( experiences );
+				print_location( current_location );
+				printf( "What will you do?: ");
 				scanf( "%d", &input );
 				go_to = parse_input( input, current_location.opts );
+				while ( go_to == 0 ){
+					printf( "Not a valid input, please select from the above options: ");
+					scanf( "%d", &input );
+					go_to = parse_input( input, current_location.opts );
+				}
+			}
+			next_year = do_condreds( experiences, timelimit, 1 );
+			if( next_year != 0 ){
+				printf( "time happened \n" );
 			}
 		}
 	}
+}
+
+int set_exp( pair exp[EXP_NUM], pair target ){
+	int i;
+	for( i = 0; i < EXP_NUM; i++ ){
+		if( strcmp( target.keyword, exp[i].keyword ) == 0 ){
+			exp[i].value = target.value;
+			return 1;
+		}
+	}
+	return 0;
 }
 
 int test_exp( pair test, pair exp[EXP_NUM] ){
@@ -135,9 +173,9 @@ int test_exp( pair test, pair exp[EXP_NUM] ){
 	return 0;
 }
 
-int do_condreds( pair exp[EXP_NUM], cond condreds[MAX_CONDREDS] ){
+int do_condreds( pair exp[EXP_NUM], cond condreds[MAX_CONDREDS], int num_condreds ){
 	int i, j;
-	for( i = 0; i < MAX_CONDREDS; i++ ){ //condreds must be the outer loop to be in the right order
+	for( i = 0; i < num_condreds; i++ ){ //condreds must be the outer loop to be in the right order
 		for( j = 0; j < EXP_NUM; j++ ){
 			if( strcmp( condreds[i].keyword, exp[j].keyword ) == 0 ){
 				if( condreds[i].value <= exp[j].value ){
