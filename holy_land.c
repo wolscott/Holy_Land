@@ -6,7 +6,7 @@
 #include <string.h>
 
 #define MAX_OPTIONS 5 //max number of options at a location
-#define LOC_SOURCE "locations.txt"
+#define LOC_SOURCE "storylocs.txt"
 #define BODY_LEN 1000
 #define MAX_OPT_BODY 1000
 #define MAX_LOCATIONS 10 //phasing out, replaced with MAX_YEARS

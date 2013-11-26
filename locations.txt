@@ -3,7 +3,7 @@
 This is the description of the first location,
 this next character is the sentinal#
 1 2Go to one place#
-2 3 go to a different place#
+2 3go to a different place#
 3 seriously#
 0
 
