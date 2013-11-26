@@ -22,6 +22,7 @@
 typedef struct {
 	int opt_num; //number entered to select the option
 	int go_to; //location id that this option will return
+	struct location* go_to_ptr;
 	char opt_body[MAX_OPT_BODY]; //description of this option
 } option;
 
@@ -67,11 +68,11 @@ typedef struct {
 //prototypes
 //location get_location( FILE* locations, long address, loc_map map[MAX_LOCATIONS], pair exp[EXP_NUM] );
 void get_location( FILE* l_file, location* );
-void print_location( location );
+void print_location( location* ltp );
 void print_options( option[MAX_OPTIONS] );
 void get_options( FILE* locations, option opts[MAX_OPTIONS] );
 void init_loc_map( FILE* locations, loc_map map[MAX_LOCATIONS] );
-int parse_input( int input, option opts[MAX_OPTIONS] );
+location* parse_input( int input, option opts[MAX_OPTIONS] );
 long get_address( int go_to, loc_map map[MAX_LOCATIONS] );
 void print_loc_map( loc_map map[MAX_LOCATIONS] );
 void reset_location( location* );
@@ -83,6 +84,7 @@ void make_year_map( FILE* locations, loc_map map[MAX_YEARS] );
 void print_year_map( loc_map map[MAX_YEARS] );
 void get_locs( FILE* l_file, long offset, location locs[MAX_LOCS] );
 int do_condreds( pair experiences[EXP_NUM], cond condreds[MAX_CONDREDS], int num_condreds );
+void build_loc_links(location locs[MAX_LOCS]);
 //being main
 int main(){
 	puts( "Welcome to Holy Land" );
@@ -97,8 +99,9 @@ int main(){
 	location locs[MAX_LOCS];
 	pair experiences[EXP_NUM];
 	init_exp( experiences );
-	location current_location;
-	int input, go_to=1;
+	location* current_location;
+	int input;
+	location* go_to;
 	int alive = 1;
 	int gameon = 1;
 	int year = 0;
@@ -112,7 +115,8 @@ int main(){
 	timelimit[0].new_go = 1;
 	while( gameon == 1){
 		year++;
-		go_to = 1;
+		//go_to = 1;
+		go_to = &locs[1];
 		address = year_map[year].offset;
 		if( year > 1 && address == 0 ){
 			gameon = 0;
@@ -121,25 +125,27 @@ int main(){
 		l_file = fopen( LOC_SOURCE, "r" );
 		get_locs( l_file, address, locs );
 		fclose( l_file );
+		build_loc_links( locs );
 		next_year = 0;
 		if( !set_exp( experiences, reset_time )){
 			puts( "time error");
 		}
 	//print_experiences( experiences );
 		while( next_year == 0 ){
-			current_location = locs[go_to];
-			update_experiences( experiences, current_location.effects );
-			go_to = do_condreds( experiences, current_location.condreds, MAX_CONDREDS );
+			//current_location = &locs[go_to];
+			current_location = go_to;
+			update_experiences( experiences, (*current_location).effects );
+			go_to = do_condreds( experiences, (*current_location).condreds, MAX_CONDREDS );
 			if( go_to == 0 ){
 				print_experiences( experiences );
 				print_location( current_location );
 				printf( "What will you do?: ");
 				scanf( "%d", &input );
-				go_to = parse_input( input, current_location.opts );
+				go_to = parse_input( input, (*current_location).opts );
 				while ( go_to == 0 ){
 					printf( "Not a valid input, please select from the above options: ");
 					scanf( "%d", &input );
-					go_to = parse_input( input, current_location.opts );
+					go_to = parse_input( input, (*current_location).opts );
 				}
 			}
 			next_year = do_condreds( experiences, timelimit, 1 );
@@ -150,6 +156,19 @@ int main(){
 	}
 }
 
+
+void build_loc_links(location locs[MAX_LOCS]){
+	int i, j, k;
+	for( i = 0; i < MAX_LOCS; i++ ){
+		for( j = 0; j < MAX_OPTIONS && locs[i].opts[j].opt_num != 0; j++ ){
+			for( k = 0; k < MAX_LOCS; k++){
+				if( locs[i].opts[j].go_to == locs[k].loc_id ){
+					locs[i].opts[j].go_to_ptr = &locs[k];
+				}
+			}
+		}	
+	}
+}//end build_loc_links( location locs[MAX_LOCS])
 int set_exp( pair exp[EXP_NUM], pair target ){
 	int i;
 	for( i = 0; i < EXP_NUM; i++ ){
@@ -264,11 +283,12 @@ long get_address( int go_to, loc_map map[MAX_LOCATIONS] ){
 	}
 }
 
-int parse_input( int input, option opts[MAX_OPTIONS] ){
+location* parse_input( int input, option opts[MAX_OPTIONS] ){
 	int i;
 	for( i = 0; i < MAX_OPTIONS && opts[i].opt_num != 0; i++ ){
 		if( input == opts[i].opt_num ){
-			return opts[i].go_to;
+			//return opts[i].go_to;
+			return opts[i].go_to_ptr;
 		}
 	}
 	return 0;
@@ -362,10 +382,10 @@ void get_options( FILE* locations, option opts[MAX_OPTIONS] ){
 	}
 }
 		
-void print_location( location ltp ){
-	printf( "The year is %d, you are at location %d:%s\n", ltp.year, ltp.loc_id, ltp.body );
-	printf( "first keyword: %s, increment: %d\n", ltp.effects[0].keyword, ltp.effects[0].value );
-	print_options( ltp.opts );
+void print_location( location* ltp ){
+	printf( "The year is %d, you are at location %d:%s\n", (*ltp).year, (*ltp).loc_id, (*ltp).body );
+	printf( "first keyword: %s, increment: %d\n", (*ltp).effects[0].keyword, (*ltp).effects[0].value );
+	print_options( (*ltp).opts );
 }
 
 void print_options( option opts[MAX_OPTIONS] ){
