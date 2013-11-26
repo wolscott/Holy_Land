@@ -66,7 +66,7 @@ typedef struct {
 
 //prototypes
 //location get_location( FILE* locations, long address, loc_map map[MAX_LOCATIONS], pair exp[EXP_NUM] );
-location get_location( FILE* l_file );
+void get_location( FILE* l_file, location* );
 void print_location( location );
 void print_options( option[MAX_OPTIONS] );
 void get_options( FILE* locations, option opts[MAX_OPTIONS] );
@@ -103,10 +103,8 @@ int main(){
 	pair experiences[EXP_NUM];
 	init_exp( experiences );
 	print_experiences( experiences );
-	location current_location;// = get_location( locations, map[0].offset );
+	location current_location;
 	while( alive == 1 ){
-		//current_location = reset_location();
-		//reset_location( &current_location );
 		current_location = locs[go_to];
 		update_experiences( experiences, current_location.effects );
 		go_to = do_condreds( experiences, current_location.condreds );
@@ -177,6 +175,7 @@ void update_experiences( pair exp[EXP_NUM], pair effects[MAX_EFFECTS] ){
 }
 void print_experiences( pair exp[EXP_NUM] ){
 	int i, printed = 0;
+	printf( "\n" );
 	for( i = 0; i < EXP_NUM; i++ ){
 		if( exp[i].keyword[0] != '?' ){
 			printf( "%s - %d\t", exp[i].keyword, exp[i].value );
@@ -192,10 +191,11 @@ void print_experiences( pair exp[EXP_NUM] ){
 }
 
 void reset_location( location* blank ){
-	//location blank;
 	(*blank).loc_id = 0;
-	strcpy( (*blank).body, "" );
 	int i, j;
+	for( i = 0; i < BODY_LEN; i++ ){
+		(*blank).body[i] = '\0';
+	}
 	for( i = 0; i < MAX_EFFECTS; i++ ){
 		for( j = 0; j < KEY_LEN; j++ ){
 			(*blank).effects[i].keyword[j] = '\0';
@@ -208,7 +208,6 @@ void reset_location( location* blank ){
 		}
 		(*blank).condreds[i].value = 0;
 	}
-	//return blank;
 }
 
 void print_loc_map( loc_map map[MAX_LOCATIONS] ){
@@ -273,34 +272,31 @@ void get_locs( FILE* l_file, long offset, location locs[MAX_LOCS] ){
 	int i=1, c;
 	while( (c = fgetc( l_file ) ) != '&' && c != EOF ){
 		if( c == '@' ){
-			locs[i++] = get_location( l_file );
+			//locs[i++] = get_location( l_file );
+			get_location( l_file, &locs[i++] );
 		}
 	}
 }
 
-location get_location( FILE* locations ) { 
-	//location new_l = reset_location();
-	location new_l;
-	reset_location( &new_l );
-	//fseek( locations, offset, SEEK_SET ); //seek to the start of the desired location
-	fscanf( locations, "%d%d", &new_l.loc_id, &new_l.year );
+void get_location( FILE* locations, location* new_l ) { 
+	reset_location( new_l );
+	fscanf( locations, "%d%d", &(*new_l).loc_id, &(*new_l).year );
 	int c, effect = 0, condred = 0;
-	char* tempptr = new_l.body;
-	//char* token;
+	char* tempptr = (*new_l).body;
 	while( (c = fgetc( locations ) ) != '#' ){
 		switch( c ){
 			case '^': //starting an effect
 				if( effect < MAX_EFFECTS ){
-					fscanf( locations, "%s%d", new_l.effects[effect].keyword,
-								 &new_l.effects[effect].value );
+					fscanf( locations, "%s%d", (*new_l).effects[effect].keyword,
+								 &(*new_l).effects[effect].value );
 					effect++;
 				}
 				break;
 			case '?': //starting conditional redirect
 				if( condred < MAX_CONDREDS ){
-					fscanf( locations, "%s%d%d", new_l.condreds[condred].keyword,
-								 &new_l.condreds[condred].value,
-								&new_l.condreds[condred].new_go );
+					fscanf( locations, "%s%d%d", (*new_l).condreds[condred].keyword,
+								 &(*new_l).condreds[condred].value,
+								&(*new_l).condreds[condred].new_go );
 					condred++;
 				}
 				break;
@@ -309,8 +305,7 @@ location get_location( FILE* locations ) {
 		}
 	}
 	*tempptr = '\0';
-	get_options( locations, new_l.opts );
-	return new_l;
+	get_options( locations, (*new_l).opts );
 }
 
 void get_options( FILE* locations, option opts[MAX_OPTIONS] ){
