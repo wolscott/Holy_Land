@@ -1,36 +1,36 @@
 &1
-@1 1
+@start 1
 You are standing in the road outside a small village near your home#
-1 2Go to the chicken coop#
-2 5go inside to the kitchen#
+1 coop1 Go to the chicken coop#
+2 kitchen go inside to the kitchen#
 3 4go to the smithy#
 0
 
-@2 1
-?chicken 1 4You are standing in front the chicken coop. It is in need of repairs#
-1 3 fix the chicken coop#
-2 1 go back to the road#
+@coop1 1
+?chicken 1 fixed_coop You are standing in front the chicken coop. It is in need of repairs#
+1 fixing_coop fix the chicken coop#
+2 start go back to the road#
 0
 
-@3 1
+@fixing_coop 1
 ^chicken 1^time 1It takes you about an hour, but you get the chicken coop fixed#
-1 1go back to the road#
+1 start go back to the road#
 0
 
-@4 1
+@fixed_coop 1
 The chicken coop is here. It has been repaired#
-1 1go back to the road#
+1 start go back to the road#
 0
 
-@5 1
+@kitchen 1
 As soon as you enter the kitchen, you mother puts you to work helping her prepare the days meals#
-1 6stay and help your mother#
-2 1go back outside#
+1 khelp stay and help your mother#
+2 start go back outside#
 0
 
-@6 1^time 1^mother 1You help your mother in the kitchen#
-1 6Continue helping your mother#
-2 1go back outside#
+@khelp 1^time 1^mother 1You help your mother in the kitchen#
+1 khelp Continue helping your mother#
+2 start go back outside#
 0
 
 @7 1 you  made it to heaven!#
