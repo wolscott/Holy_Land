@@ -90,5 +90,6 @@ location* do_condreds( location*, pair experiences[EXP_NUM] );
 void build_loc_links(location locs[MAX_LOCS], loc_link link_map[MAX_LOCS]);
 void build_link_map(location locs[MAX_LOCS], loc_link link_map[MAX_LOCS]);
 location* get_link( char loc_name[LOC_NAME_LEN], loc_link link_map[MAX_LOCS]);
+location* load_save( FILE* savefile, pair exp[EXP_NUM], loc_link link_map[MAX_LOCS] );
 
 //end header file

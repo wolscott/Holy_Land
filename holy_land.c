@@ -4,37 +4,40 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <holy_land.h>
+#include <holy_land.h> //this header contains all of the functions prototypes, constants, and structs used in holy_land
 
 //begin main
 int main(){
-	puts( "Welcome to Holy Land" );
+	//puts( "Welcome to Holy Land" ); moved to story file to make engine more seperate
 	/* Open file and make year_map (one time when program is run)
 	 */
 	FILE* l_file = fopen( LOC_SOURCE, "r" );
-	loc_map year_map[MAX_YEARS];
+	loc_map year_map[MAX_YEARS]; //
 	make_year_map( l_file, year_map );
 	fclose( l_file );
 	//create an array of location strucs
 	long address; // get_address( go_to, map );
 	location locs[MAX_LOCS];
-	pair experiences[EXP_NUM];
-	init_exp( experiences );
-	location* current_location;
+	pair experiences[EXP_NUM]; //create experiences list
+	init_exp( experiences ); //set all experiences blank
+	location* current_location; //pointer to current location
 	int input;
-	location* go_to;
-	int alive = 1;
-	int gameon = 1;
-	int year = 0;
-	int next_year;
-	pair reset_time;
-	strcpy( reset_time.keyword, "time" );
-	reset_time.value = 0;
-	cond timelimit[1];
-	strcpy( timelimit[0].keyword, "time");
-	timelimit[0].value = 17;
-	loc_link link_map[MAX_LOCS];
+	location* go_to; //phase out
+	int alive = 1; //phase out, replace with experience attribute
+	int gameon = 1; //phase out, replace wit experience attribute?
+	int year = 0; //year should be changed to something more story independant, change to attribute?
+	int next_year; //phase out
+	pair reset_time; //what is this? phase out
+	strcpy( reset_time.keyword, "time" ); //phase out
+	reset_time.value = 0; //phase out
+	cond timelimit[1]; //phase out
+	strcpy( timelimit[0].keyword, "time"); //phase out
+	timelimit[0].value = 17; //phase out, use global redirect instead
+	loc_link link_map[MAX_LOCS]; //creat a list that can associate names and addresses
 	//timelimit[0].new_go = 1;
+	#define SAVE_FILE "hl.save"
+	char file_to_load[10] = SAVE_FILE;
+	FILE* load_game = fopen( file_to_load, "r" );
 	while( gameon == 1){
 		year++;
 		//go_to = 1;
@@ -50,34 +53,48 @@ int main(){
 		build_link_map( locs, link_map );
 		build_loc_links( locs, link_map );
 		next_year = 0;
+		current_location = load_save( load_game, experiences, link_map );
+		/*
 		if( !set_exp( experiences, reset_time )){
 			puts( "time error");
-		}
+		}*/
 	//print_experiences( experiences );
-		while( next_year == 0 ){
+		while( current_location ){
 			//current_location = &locs[go_to];
-			current_location = go_to;
+			//current_location = go_to;
 			update_experiences( experiences, (*current_location).effects );
 			current_location = do_condreds( current_location, experiences );
-			if( go_to == 0 ){ 
+			//if( go_to == 0 ){ 
 				print_experiences( experiences );
 				print_location( current_location );
 				printf( "What will you do?: ");
 				scanf( "%d", &input );
-				go_to = parse_input( input, (*current_location).opts );
-				while ( go_to == 0 ){
+				//go_to = parse_input( input, (*current_location).opts );
+				current_location = parse_input( input, (*current_location).opts );
+				while ( current_location == 0 ){
 					printf( "Not a valid input, please select from the above options: ");
 					scanf( "%d", &input );
-					go_to = parse_input( input, (*current_location).opts );
+					current_location = parse_input( input, (*current_location).opts );
 				}
-			}
+			//}
 			//next_year = do_condreds( experiences, timelimit, 1 );
-			if( next_year != 0 ){
+			/*if( next_year != 0 ){
 				printf( "time happened \n" );
-			}
+			}*/
 		}
 	}
 }
+
+location* load_save( FILE* save_file, pair exp[EXP_NUM], loc_link link_map[MAX_LOCS] ){
+	char loc_name[LOC_NAME_LEN];
+	fscanf( save_file, "%s", loc_name );
+	location* loc = get_link( loc_name, link_map );
+	int i;
+	for( i = 0; i < EXP_NUM; i++ ){
+		fscanf( save_file, "%s%d", exp[i].keyword, &(exp[i].value) );
+	}
+	return loc;
+} //end load_save
 
 /* creates a list that associates location names with the location ptr address
  */
@@ -104,11 +121,14 @@ location* get_link( char loc_name[LOC_NAME_LEN], loc_link link_map[MAX_LOCS]){
 /* Goes through the list of locations and sets the location pointers for each option
  */
 void build_loc_links(location locs[MAX_LOCS], loc_link link_map[MAX_LOCS]){
-	int i, j;
+	int i, j, k;
 	for( i = 0; i < MAX_LOCS; i++ ){
 		for( j = 0; j < MAX_OPTIONS && locs[i].opts[j].opt_num != 0; j++ ){
 			locs[i].opts[j].go_to_ptr = get_link( locs[i].opts[j].go_to, link_map);
 		}	
+		for( k = 0; k < MAX_CONDREDS; k++ ){
+			locs[i].condreds[k].new_go_ptr = get_link( locs[i].condreds[k].new_go, link_map);
+		}
 	}
 }//end build_loc_links( location locs[MAX_LOCS])
 
