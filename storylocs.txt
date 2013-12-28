@@ -1,5 +1,7 @@
+?time 5 7
+
 &1
-@menu
+@menu 1
 Welcome to Holy Land#
 
 1 start Start Game#

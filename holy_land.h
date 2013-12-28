@@ -9,9 +9,10 @@
 #define MAX_EFFECTS 3 //number of exp effects that a location can have
 #define MAX_CONDREDS 3 //number of conditional redirects that a location can have
 #define EXP_NUM 5 
-#define MAX_LOCS 20 //max locations per year
+#define MAX_LOCS 20 //max locations per block
 #define MAX_YEARS 5 //should be like a billion, but small for testing purposes
 #define LOC_NAME_LEN 32
+#define GLOB_CONDREDS 8 //number of global condreds
 
 /*the 'option' structure is used to for storing and displaying menu options
  */
@@ -45,7 +46,7 @@ typedef struct {
  * the possible gameplay options
  */
 typedef struct {
-	int year; //the year this location takes place
+	int block; //the block this location takes place
 	int loc_id; //unique location id, used for moving between locations
 	char loc_name[LOC_NAME_LEN]; //replacing loc_id which is being phased out
 	pair effects[MAX_EFFECTS]; //effects from traveling to this location
@@ -83,13 +84,15 @@ void print_experiences( pair experiences[EXP_NUM] );
 void update_experiences( pair experiences[EXP_NUM], pair effects[MAX_EFFECTS] );
 void init_exp( pair exp[EXP_NUM] );
 int test_exp( pair test, pair exp[EXP_NUM] );
-void make_year_map( FILE* locations, loc_map map[MAX_YEARS] );
-void print_year_map( loc_map map[MAX_YEARS] );
+void make_block_map( FILE* locations, loc_map map[MAX_YEARS] );
+void print_block_map( loc_map map[MAX_YEARS] );
 void get_locs( FILE* l_file, long offset, location locs[MAX_LOCS] );
-location* do_condreds( location*, pair experiences[EXP_NUM] );
-void build_loc_links(location locs[MAX_LOCS], loc_link link_map[MAX_LOCS]);
+location* do_condreds( location*, cond globcons[GLOB_CONDREDS], pair experiences[EXP_NUM] );
+void build_loc_links(location locs[MAX_LOCS], cond globconds[GLOB_CONDREDS], loc_link link_map[MAX_LOCS]);
 void build_link_map(location locs[MAX_LOCS], loc_link link_map[MAX_LOCS]);
 location* get_link( char loc_name[LOC_NAME_LEN], loc_link link_map[MAX_LOCS]);
 location* load_save( FILE* savefile, pair exp[EXP_NUM], loc_link link_map[MAX_LOCS] );
+int get_save_block( FILE* savefile );
+void get_glob_condreds( FILE* l_file, cond condreds[GLOB_CONDREDS] );
 
 //end header file

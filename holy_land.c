@@ -9,11 +9,14 @@
 //begin main
 int main(){
 	//puts( "Welcome to Holy Land" ); moved to story file to make engine more seperate
-	/* Open file and make year_map (one time when program is run)
+	/* Open file and make block_map (one time when program is run)
 	 */
+	cond glob_condreds[GLOB_CONDREDS]; //list of global conditional redirects
 	FILE* l_file = fopen( LOC_SOURCE, "r" );
-	loc_map year_map[MAX_YEARS]; //
-	make_year_map( l_file, year_map );
+	loc_map block_map[MAX_YEARS]; //
+	make_block_map( l_file, block_map );
+	rewind( l_file );
+	get_glob_condreds( l_file, glob_condreds );
 	fclose( l_file );
 	//create an array of location strucs
 	long address; // get_address( go_to, map );
@@ -25,8 +28,8 @@ int main(){
 	location* go_to; //phase out
 	int alive = 1; //phase out, replace with experience attribute
 	int gameon = 1; //phase out, replace wit experience attribute?
-	int year = 0; //year should be changed to something more story independant, change to attribute?
-	int next_year; //phase out
+	int block = 0; // change to attribute? no because it is needed for save/load purposes.
+	int next_block; //phase out
 	pair reset_time; //what is this? phase out
 	strcpy( reset_time.keyword, "time" ); //phase out
 	reset_time.value = 0; //phase out
@@ -38,21 +41,24 @@ int main(){
 	#define SAVE_FILE "hl.save"
 	char file_to_load[10] = SAVE_FILE;
 	FILE* load_game = fopen( file_to_load, "r" );
+
 	while( gameon == 1){
-		year++;
+		//n/ block++;
 		//go_to = 1;
-		go_to = &locs[1];
-		address = year_map[year].offset;
-		if( year > 1 && address == 0 ){
+		block = get_save_block( load_game );
+		//go_to = &locs[1];
+		address = block_map[block].offset;
+		/*
+		if( block > 1 && address == 0 ){
 			gameon = 0;
 			break;
-		}
+		}*/
 		l_file = fopen( LOC_SOURCE, "r" );
 		get_locs( l_file, address, locs );
 		fclose( l_file );
 		build_link_map( locs, link_map );
-		build_loc_links( locs, link_map );
-		next_year = 0;
+		build_loc_links( locs, glob_condreds, link_map );
+		next_block = 0;
 		current_location = load_save( load_game, experiences, link_map );
 		/*
 		if( !set_exp( experiences, reset_time )){
@@ -63,7 +69,7 @@ int main(){
 			//current_location = &locs[go_to];
 			//current_location = go_to;
 			update_experiences( experiences, (*current_location).effects );
-			current_location = do_condreds( current_location, experiences );
+			current_location = do_condreds( current_location, glob_condreds,  experiences );
 			//if( go_to == 0 ){ 
 				print_experiences( experiences );
 				print_location( current_location );
@@ -77,16 +83,23 @@ int main(){
 					current_location = parse_input( input, (*current_location).opts );
 				}
 			//}
-			//next_year = do_condreds( experiences, timelimit, 1 );
-			/*if( next_year != 0 ){
+			//next_block = do_condreds( experiences, timelimit, 1 );
+			/*if( next_block != 0 ){
 				printf( "time happened \n" );
 			}*/
 		}
 	}
 }
 
+int get_save_block( FILE* save_file ){
+	int save_block;
+	fscanf( save_file, "%d", &save_block );
+	return save_block;
+}
+
 location* load_save( FILE* save_file, pair exp[EXP_NUM], loc_link link_map[MAX_LOCS] ){
 	char loc_name[LOC_NAME_LEN];
+	int save_block; //not actually used in this function
 	fscanf( save_file, "%s", loc_name );
 	location* loc = get_link( loc_name, link_map );
 	int i;
@@ -118,9 +131,9 @@ location* get_link( char loc_name[LOC_NAME_LEN], loc_link link_map[MAX_LOCS]){
 	}
 }
 
-/* Goes through the list of locations and sets the location pointers for each option
+/* Goes through the list of locations and sets the location pointers for each option and each conditional redirect
  */
-void build_loc_links(location locs[MAX_LOCS], loc_link link_map[MAX_LOCS]){
+void build_loc_links(location locs[MAX_LOCS], cond glob_condreds[GLOB_CONDREDS], loc_link link_map[MAX_LOCS]){
 	int i, j, k;
 	for( i = 0; i < MAX_LOCS; i++ ){
 		for( j = 0; j < MAX_OPTIONS && locs[i].opts[j].opt_num != 0; j++ ){
@@ -128,6 +141,9 @@ void build_loc_links(location locs[MAX_LOCS], loc_link link_map[MAX_LOCS]){
 		}	
 		for( k = 0; k < MAX_CONDREDS; k++ ){
 			locs[i].condreds[k].new_go_ptr = get_link( locs[i].condreds[k].new_go, link_map);
+		}
+		for( k = 0; k < GLOB_CONDREDS; k++ ){
+			glob_condreds[k].new_go_ptr = get_link( glob_condreds[k].new_go, link_map);
 		}
 	}
 }//end build_loc_links( location locs[MAX_LOCS])
@@ -157,8 +173,18 @@ int test_exp( pair test, pair exp[EXP_NUM] ){
 	return 0;
 }
 
-location* do_condreds( location* current_loc, pair exp[EXP_NUM] ){
+location* do_condreds( location* current_loc, cond glob_condreds[GLOB_CONDREDS], pair exp[EXP_NUM] ){
 	int i, j;
+	//add another nested loop to do glob_condreds first
+	for( i = 0; i < GLOB_CONDREDS; i++ ){ //condreds must be the outer loop to be in the right order
+		for( j = 0; j < EXP_NUM; j++ ){
+			if( strcmp( glob_condreds[i].keyword, exp[j].keyword ) == 0 ){
+				if( glob_condreds[i].value <= exp[j].value ){
+					return glob_condreds[i].new_go_ptr;
+				}
+			}
+		}
+	}
 	for( i = 0; i < MAX_CONDREDS; i++ ){ //condreds must be the outer loop to be in the right order
 		for( j = 0; j < EXP_NUM; j++ ){
 			if( strcmp( (*current_loc).condreds[i].keyword, exp[j].keyword ) == 0 ){
@@ -170,20 +196,6 @@ location* do_condreds( location* current_loc, pair exp[EXP_NUM] ){
 	}
 	return current_loc;
 }
-/* old
-location* do_condreds( pair exp[EXP_NUM], cond condreds[MAX_CONDREDS], int num_condreds ){
-	int i, j;
-	for( i = 0; i < num_condreds; i++ ){ //condreds must be the outer loop to be in the right order
-		for( j = 0; j < EXP_NUM; j++ ){
-			if( strcmp( condreds[i].keyword, exp[j].keyword ) == 0 ){
-				if( condreds[i].value <= exp[j].value ){
-					return condreds[i].new_go_ptr;
-				}
-			}
-		}
-	}
-	return 0;
-}*/
 
 void init_exp( pair exp[EXP_NUM] ){
 	int i, j;
@@ -210,6 +222,7 @@ void update_experiences( pair exp[EXP_NUM], pair effects[MAX_EFFECTS] ){
 		
 	}
 }
+
 void print_experiences( pair exp[EXP_NUM] ){
 	int i, printed = 0;
 	printf( "\n" );
@@ -275,16 +288,16 @@ location* parse_input( int input, option opts[MAX_OPTIONS] ){
 	return 0;
 }
 
-void print_year_map( loc_map map[MAX_YEARS] ){
+void print_block_map( loc_map map[MAX_YEARS] ){
 	int i;
 	for( i = 0; i < MAX_YEARS; i++ ){
 		printf("location %d is at %ld\n", map[i].loc_id, map[i].offset );
 	}
 }
-void make_year_map( FILE* locations, loc_map map[MAX_YEARS] ){
+void make_block_map( FILE* locations, loc_map map[MAX_YEARS] ){
 	int i=1,c;
 	while( (c = fgetc( locations )) != EOF ){
-		if( c == '&' ){ // '&' is the sentinal char indicating the start of a year
+		if( c == '&' ){ // '&' is the sentinal char indicating the start of a block
 			map[i].offset = ftell( locations );
 			fscanf( locations, "%d", &map[i].loc_id );
 			i++;
@@ -292,8 +305,8 @@ void make_year_map( FILE* locations, loc_map map[MAX_YEARS] ){
 	}
 }
 
-/* init_loc_map being phased out, because 1 years worth of locs will now be stored in an array. 
- * this same logic will be used to make a yearmap to facilitate this.
+/* init_loc_map being phased out, because 1 blocks worth of locs will now be stored in an array. 
+ * this same logic will be used to make a blockmap to facilitate this.
  */
 void init_loc_map( FILE* locations, loc_map map[MAX_LOCATIONS] ){
 	int i=0,c;
@@ -317,9 +330,23 @@ void get_locs( FILE* l_file, long offset, location locs[MAX_LOCS] ){
 	}
 }
 
+void get_glob_condreds( FILE* locations, cond glob_condreds[GLOB_CONDREDS] ){
+	int c, condred = 0;
+	while( (c = fgetc( locations ) ) != '@' ){ //global condreds all preceed the first location
+		if( c == '?' ){
+			if( condred < GLOB_CONDREDS ){
+				fscanf( locations, "%s%d%s", glob_condreds[condred].keyword,
+							 &(glob_condreds[condred].value),
+							glob_condreds[condred].new_go );
+				condred++;
+			}
+		}
+	}
+} //end get_glob_condreds
+
 void get_location( FILE* locations, location* new_l ) { 
 	reset_location( new_l );
-	fscanf( locations, "%s%d", (*new_l).loc_name, &(*new_l).year );
+	fscanf( locations, "%s%d", (*new_l).loc_name, &(*new_l).block );
 	int c, effect = 0, condred = 0;
 	char* tempptr = (*new_l).body;
 	while( (c = fgetc( locations ) ) != '#' ){
@@ -365,7 +392,7 @@ void get_options( FILE* locations, option opts[MAX_OPTIONS] ){
 }
 		
 void print_location( location* ltp ){
-	printf( "The year is %d, you are at location %s:%s\n", (*ltp).year, (*ltp).loc_name, (*ltp).body );
+	printf( "The block is %d, you are at location %s:%s\n", (*ltp).block, (*ltp).loc_name, (*ltp).body );
 	printf( "first keyword: %s, increment: %d\n", (*ltp).effects[0].keyword, (*ltp).effects[0].value );
 	print_options( (*ltp).opts );
 }
