@@ -4,10 +4,10 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <holy_land.h> //this header contains all of the functions prototypes, constants, and structs used in holy_land
+#include "holy_land.h" //this header contains all of the functions prototypes, constants, and structs used in holy_land
 
 //begin main
-int main(){
+int amain(){ //added a because not useingg right now
 	//puts( "Welcome to Holy Land" ); moved to story file to make engine more seperate
 	/* Open file and make block_map (one time when program is run)
 	 */

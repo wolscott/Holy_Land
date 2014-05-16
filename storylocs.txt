@@ -6,6 +6,7 @@ Welcome to Holy Land#
 
 1 start Start Game#
 0
+[q
 
 @start 1
 You are standing in the road outside a small village near your home#
@@ -13,40 +14,48 @@ You are standing in the road outside a small village near your home#
 2 kitchen go inside to the kitchen#
 3 4go to the smithy#
 0
+[q
 
 @coop1 1
 ?chicken 1 fixed_coop You are standing in front the chicken coop. It is in need of repairs#
 1 fixing_coop fix the chicken coop#
 2 start go back to the road#
 0
+[q]
 
 @fixing_coop 1
-^chicken 1^time 1It takes you about an hour, but you get the chicken coop fixed#
+[^chicken 1][^time 1][b It takes you about an hour, but you get the chicken coop fixed]#
 1 start go back to the road#
 0
 
+[q]
 @fixed_coop 1
 The chicken coop is here. It has been repaired#
 1 start go back to the road#
 0
 
+[q]
 @kitchen 1
 As soon as you enter the kitchen, you mother puts you to work helping her prepare the days meals#
 1 khelp stay and help your mother#
 2 start go back outside#
 0
 
+[q]
 @khelp 1^time 1^mother 1You help your mother in the kitchen#
 1 khelp Continue helping your mother#
 2 start go back outside#
 0
 
+[q]
 @7 1 you  made it to heaven!#
 1 5 go back to church(why?)#
 0
 
+[q]
 &2
 
 @1 The first location of year 2!#
 1 1 stay here#
-0
+
+[q]0

@@ -31,6 +31,15 @@ typedef struct {
 	int value; //by this much
 } pair;
 
+/* the 'l_pair' structure is used to associate keywords with bonuses to 
+ * the status associated with those keywords, but is for linked lists
+ */
+typedef struct l_pair_{
+	char keyword[KEY_LEN]; //this keyword will be increment
+	int value; //by this much
+	struct l_pair_* next;
+} l_pair;
+
 /* the 'cond' structure is used to associate keywords with conditions to 
  * to be met and the new destination when those conditions are met
  */
@@ -48,8 +57,9 @@ typedef struct {
 typedef struct {
 	int block; //the block this location takes place
 	int loc_id; //unique location id, used for moving between locations
-	char loc_name[LOC_NAME_LEN]; //replacing loc_id which is being phased out
-	pair effects[MAX_EFFECTS]; //effects from traveling to this location
+	char name[LOC_NAME_LEN]; //replacing loc_id which is being phased out
+	l_pair** effects; //new linked list implementation
+//	pair effects[MAX_EFFECTS]; //effects from traveling to this location
 	cond condreds[MAX_CONDREDS];
 	char body[BODY_LEN];// description of this location
 	option opts[MAX_OPTIONS]; //options that can be selected at this location
