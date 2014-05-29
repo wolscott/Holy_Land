@@ -12,6 +12,7 @@ typedef struct loc_mapper_{
 	struct loc_mapper_* next;
 }loc_mapper;
 
+
 location* parse_loc( FILE* );
 loc_mapper* add( loc_mapper*, location* );
 loc_mapper* append( loc_mapper*, location* );
@@ -20,16 +21,21 @@ void print_loc( location* );
 void print_all( loc_mapper* head );
 void build_loc_map_array( location**, loc_mapper*, int );
 void print_array( location**, int );
-location* get_loc_from_name( location** loc_array, int len, char* name );
+location* get_loc_from_name( location** loc_array, int start, int end, char* name );
 void free_list( loc_mapper* );
 void append_pair( l_pair**, l_pair* );
+void append_option( option**, option* );
 void free_locs( location**, int num );
 void free_location( location* );
 void free_pair_list( l_pair* );
+void free_option_list( option* );
+void find_targets( location** loc_array, int len );
+void set_option_targets( option** head, location** loc_array, int len );
 
 //parse family of functions
 void get_effect( FILE*, location* );
 void get_body( FILE*, location* );
+void get_option( FILE*, location* );
 
 int main(){
 	FILE* l_file = fopen( LOC_SOURCE, "r" );
@@ -44,12 +50,15 @@ int main(){
 			head = insert( head, new_loc );
 		}
 	}
-	print_all( head );
+	fclose( l_file );
+//	print_all( head );
 	location** loc_map_array = malloc( sizeof(location*) * num_locs);
 	build_loc_map_array( loc_map_array, head, num_locs );
 	print_array( loc_map_array, num_locs );
+	find_targets( loc_map_array, num_locs );
 	free_locs( loc_map_array, num_locs );
 	free_list( head );
+	free( loc_map_array );
 } //end main
 
 /* print_array **
@@ -83,6 +92,8 @@ location* parse_loc( FILE* l_file ){
 	location* new_loc = malloc( sizeof( location ));
 	new_loc->effects = malloc( sizeof( l_pair* ));
 	*(new_loc->effects) = NULL;
+	new_loc->options = malloc( sizeof( option* ));
+	*(new_loc->options) = NULL;
 	fscanf( l_file, "%s", new_loc->name );
 	char c = 'a';
 	char tag[10];
@@ -95,13 +106,20 @@ location* parse_loc( FILE* l_file ){
 				case '^':
 					parse = get_effect;
 					break;
+				case '>':
+					parse = get_option;
+					break;
 				case 'b':
 					parse = get_body;
 					break;
 				case 'q':
 					return new_loc;
+				default:
+					parse = NULL;
 			}
-			parse( l_file, new_loc );
+			if( parse ){
+				parse( l_file, new_loc );
+			}
 		}	
 	}
 	return new_loc;
@@ -131,6 +149,41 @@ void get_body( FILE* l_file, location* loc ){
 		c = fgetc( l_file );
 	}
 } //end get_body
+
+/* get_option **
+ THIS FUNCTION MUST BE VOID AND TAKE A FILE POINTER AND A LOCATION POINTER
+ it is the target of a function pointer.
+*/
+void get_option( FILE* l_file, location* loc ){
+	option* new_option = malloc( sizeof( option ));
+	new_option->next = NULL;
+	fscanf( l_file, "%s", new_option->target_name );
+	char c = fgetc( l_file );
+	char* pos = new_option->body;
+	int i = 0;
+	while( c != ']' && i++ < MAX_OPT_BODY ){
+		*pos++ = c;
+		c = fgetc( l_file );
+	}
+	append_option( loc->options, new_option );
+} //end get_option
+
+/* append_option
+ this function appends a pair (key : value) node
+ to a linked list;
+*/
+void append_option( option** head, option* new ){
+	option* current = *head;
+	if( *head == NULL ){
+		*head = new;
+		return;
+	}
+	while( current->next != NULL ){
+		current = current->next;
+	}
+	current->next = new;
+} //end append_option
+
 /* append_pair
  this function appends a pair (key : value) node
  to a linked list;
@@ -212,6 +265,12 @@ void print_loc( location* loc ){
 		effect = effect->next;
 	}
 	printf( "Description: %s\n", loc->body );
+	option* option = *(loc->options);
+	int opt_num = 0;
+	while( option != NULL ){
+		printf( "\t%d\t%s \t%s\n", ++opt_num, option->target_name, option->body );
+		option = option->next;
+	}
 } //end print_loc
 
 /* print_all **
@@ -224,13 +283,50 @@ void print_all( loc_mapper* head ){
 	}
 } //end print_all
 
+/* find_targets **
+ this function goes through the location array and sets the location
+ pointers for each option of each location
+*/
+void find_targets( location** loc_array, int len ){
+	int i;
+	for( i = 0; i < len; i++ ){
+		set_option_targets( loc_array[i]->options, loc_array, len );
+	}
+} //end find_targets
+
+void set_option_targets( option** head, location** loc_array, int len ){
+	option* current = *head;
+	while( current != NULL ){
+		current->target = get_loc_from_name( loc_array, 0, len, current->target_name );
+		current = current->next;
+	}
+} //set_option_targets
+
 /* get_loc_from_name **
  this function takes the array of location pointers
  and the name of a location and returns a pointer to
  the location with that name. use binary search algorithm.
 */
-location* get_loc_from_name( location** loc_array, int len, char* name ){
-
+location* get_loc_from_name( location** loc_array, int start, int end, char* name ){
+	int mid = ( start + end ) / 2;
+	int val = strcmp( loc_array[mid]->name, name );
+	int len = end - start;
+	//base case: the current location pointer points to a location with a matching name
+	if( len == 0 ){ //did not find the location
+		printf( "ERROR: BAD OPTION TARGET: LOCATION NAME \"%s\" NOT FOUND\n", name );
+		return NULL;
+	}
+	if( val == 0 ){ //match
+		return loc_array[mid];
+	}
+	if( val > 0 ){ //name occurs earlier
+		return get_loc_from_name( loc_array, start, mid, name );
+	}
+	if( val < 0 ){ //name occurs later
+		return get_loc_from_name( loc_array, mid+1, end, name );
+	}
+		
+	
 } //end get_loc_from_name
 
 /* free_list **
@@ -263,6 +359,11 @@ void free_location( location* loc ){
 	if( *(loc->effects) != NULL ){
 		free_pair_list( *(loc->effects));
 	}
+	if( *(loc->options) != NULL ){
+		free_option_list( *(loc->options));
+	}
+	free( loc->options );
+	free( loc->effects );
 	free( loc );
 }
 
@@ -277,3 +378,15 @@ void free_pair_list( l_pair* head ){
 		free( temp );
 	}
 } //end free_pair_list
+
+/* free_option_list ** TO DO: make one function to free all types of linear linked lists
+ this function frees a linked list of l_pair nodes
+*/
+void free_option_list( option* head ){
+	option* temp;
+	while( head ){
+		temp = head;
+		head = head->next;
+		free( temp );
+	}
+} //end free_option_list

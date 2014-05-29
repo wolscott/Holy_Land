@@ -16,11 +16,12 @@
 
 /*the 'option' structure is used to for storing and displaying menu options
  */
-typedef struct {
-	int opt_num; //number entered to select the option
-	char go_to[LOC_NAME_LEN]; //location id that this option will return
-	struct location* go_to_ptr;
-	char opt_body[MAX_OPT_BODY]; //description of this option
+typedef struct option_ {
+	//int opt_num; //number entered to select the option
+	char target_name[LOC_NAME_LEN]; //location id that this option will return
+	struct location* target;
+	char body[MAX_OPT_BODY]; //description of this option
+	struct option_* next;
 } option;
 
 /* the 'pair' structure is used to associate keywords with bonuses to 
@@ -62,7 +63,8 @@ typedef struct {
 //	pair effects[MAX_EFFECTS]; //effects from traveling to this location
 	cond condreds[MAX_CONDREDS];
 	char body[BODY_LEN];// description of this location
-	option opts[MAX_OPTIONS]; //options that can be selected at this location
+	//option opts[MAX_OPTIONS]; //options that can be selected at this location
+	option** options; //new linked list implementation
 } location;
 
 /* the loc_map structure is used to associate each unique loc_id with a position
