@@ -51,6 +51,17 @@ typedef struct {
 	struct location* new_go_ptr;
 } cond;
 
+/* the 'l_cond' structure is used to associate keywords with conditions to 
+ * to be met and the new destination when those conditions are met
+ */
+typedef struct l_cond_ {
+	char keyword[KEY_LEN]; //check the value associated with this keyword
+	int value; //trigger value
+	char new_go[LOC_NAME_LEN]; //name of location for redirect
+	struct location* new_go_ptr; //address of location for redirect
+	struct l_cond_* next;
+} l_cond;
+
 /* the 'location' structure is the core of this game engine. It is used to store
  * information from the locations.txt data file containing the game's story, and 
  * the possible gameplay options
@@ -61,7 +72,8 @@ typedef struct {
 	char name[LOC_NAME_LEN]; //replacing loc_id which is being phased out
 	l_pair** effects; //new linked list implementation
 //	pair effects[MAX_EFFECTS]; //effects from traveling to this location
-	cond condreds[MAX_CONDREDS];
+//	cond condreds[MAX_CONDREDS];
+	l_cond** condreds; //new linked list implementation
 	char body[BODY_LEN];// description of this location
 	//option opts[MAX_OPTIONS]; //options that can be selected at this location
 	option** options; //new linked list implementation

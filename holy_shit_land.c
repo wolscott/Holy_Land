@@ -25,16 +25,20 @@ location* get_loc_from_name( location** loc_array, int start, int end, char* nam
 void free_list( loc_mapper* );
 void append_pair( l_pair**, l_pair* );
 void append_option( option**, option* );
+void append_condred( l_cond**, l_cond* );
 void free_locs( location**, int num );
 void free_location( location* );
 void free_pair_list( l_pair* );
 void free_option_list( option* );
+void free_condred_list( l_cond* );
 void find_targets( location** loc_array, int len );
 void set_option_targets( option** head, location** loc_array, int len );
+void set_condred_targets( l_cond** head, location** loc_array, int len );
 
 //parse family of functions
 void get_effect( FILE*, location* );
 void get_body( FILE*, location* );
+void get_condred( FILE*, location* );
 void get_option( FILE*, location* );
 
 int main(){
@@ -54,8 +58,8 @@ int main(){
 //	print_all( head );
 	location** loc_map_array = malloc( sizeof(location*) * num_locs);
 	build_loc_map_array( loc_map_array, head, num_locs );
-	print_array( loc_map_array, num_locs );
 	find_targets( loc_map_array, num_locs );
+	print_array( loc_map_array, num_locs );
 	free_locs( loc_map_array, num_locs );
 	free_list( head );
 	free( loc_map_array );
@@ -94,6 +98,8 @@ location* parse_loc( FILE* l_file ){
 	*(new_loc->effects) = NULL;
 	new_loc->options = malloc( sizeof( option* ));
 	*(new_loc->options) = NULL;
+	new_loc->condreds = malloc( sizeof( l_cond* ));
+	*(new_loc->condreds) = NULL;
 	fscanf( l_file, "%s", new_loc->name );
 	char c = 'a';
 	char tag[10];
@@ -114,6 +120,9 @@ location* parse_loc( FILE* l_file ){
 					break;
 				case 'q':
 					return new_loc;
+				case '?':
+					parse = get_condred;
+					break;
 				default:
 					parse = NULL;
 			}
@@ -149,6 +158,37 @@ void get_body( FILE* l_file, location* loc ){
 		c = fgetc( l_file );
 	}
 } //end get_body
+
+/* get_condred **
+ THIS FUNCTION MUST BE VOID AND TAKE A FILE POINTER AND A LOCATION POINTER
+ it is the target of a function pointer.
+*/
+void get_condred( FILE* l_file, location* loc ){
+	l_cond* new_condred = malloc( sizeof( l_cond ));
+	new_condred->next = NULL;
+	/* scan in the keyword to check the value of,
+		the value to compair to,
+		and the name of the location to redirect to
+	*/
+	fscanf( l_file, "%s %s %d", new_condred->new_go, new_condred->keyword, &(new_condred->value) );
+	append_condred( loc->condreds, new_condred );
+} //end get_condred
+
+/* append_condred
+ this function appends a condred node
+ to a linked list;
+*/
+void append_condred( l_cond** head, l_cond* new ){
+	l_cond* current = *head;
+	if( *head == NULL ){
+		*head = new;
+		return;
+	}
+	while( current->next != NULL ){
+		current = current->next;
+	}
+	current->next = new;
+} //end append_condred
 
 /* get_option **
  THIS FUNCTION MUST BE VOID AND TAKE A FILE POINTER AND A LOCATION POINTER
@@ -258,21 +298,26 @@ loc_mapper* append( loc_mapper* head, location* new_loc ){
  this function prints the name of a location (placeholder)
 */
 void print_loc( location* loc ){
-	printf( "\nName: %s\n\tEffects:\n", loc->name );
+	printf( "\nName: %s Address: %p\n\tEffects:\n", loc->name, loc );
 	l_pair* effect = *(loc->effects);
 	while( effect != NULL ){
 		printf( "\t%s %d\n", effect->keyword, effect->value );
 		effect = effect->next;
 	}
-	printf( "Description: %s\n", loc->body );
+	printf( "\tConditional Redirects:\n" );
+	l_cond* condred = *(loc->condreds);
+	while( condred != NULL ){
+		printf( "\t%s %d %s %p\n", condred->keyword, condred->value, condred->new_go, condred->new_go_ptr );
+		condred = condred->next;
+	}
+	printf( "\tDescription: %s\n", loc->body );
 	option* option = *(loc->options);
 	int opt_num = 0;
 	while( option != NULL ){
-		printf( "\t%d\t%s \t%s\n", ++opt_num, option->target_name, option->body );
+		printf( "\t%d\t%s %p \t%s\n", ++opt_num, option->target_name, option->target, option->body );
 		option = option->next;
 	}
-} //end print_loc
-
+}
 /* print_all **
  this function prints all the names in the loc list
 */
@@ -291,6 +336,7 @@ void find_targets( location** loc_array, int len ){
 	int i;
 	for( i = 0; i < len; i++ ){
 		set_option_targets( loc_array[i]->options, loc_array, len );
+		set_condred_targets( loc_array[i]->condreds, loc_array, len );
 	}
 } //end find_targets
 
@@ -300,7 +346,15 @@ void set_option_targets( option** head, location** loc_array, int len ){
 		current->target = get_loc_from_name( loc_array, 0, len, current->target_name );
 		current = current->next;
 	}
-} //set_option_targets
+} //end set_option_targets
+
+void set_condred_targets( l_cond** head, location** loc_array, int len ){
+	l_cond* current = *head;
+	while( current != NULL ){
+		current->new_go_ptr = get_loc_from_name( loc_array, 0, len, current->new_go );
+		current = current->next;
+	}
+} //end set_condred_targets
 
 /* get_loc_from_name **
  this function takes the array of location pointers
@@ -325,8 +379,6 @@ location* get_loc_from_name( location** loc_array, int start, int end, char* nam
 	if( val < 0 ){ //name occurs later
 		return get_loc_from_name( loc_array, mid+1, end, name );
 	}
-		
-	
 } //end get_loc_from_name
 
 /* free_list **
@@ -362,8 +414,12 @@ void free_location( location* loc ){
 	if( *(loc->options) != NULL ){
 		free_option_list( *(loc->options));
 	}
+	if( *(loc->condreds) != NULL ){
+		free_condred_list( *(loc->condreds));
+	}
 	free( loc->options );
 	free( loc->effects );
+	free( loc->condreds );
 	free( loc );
 }
 
@@ -384,6 +440,18 @@ void free_pair_list( l_pair* head ){
 */
 void free_option_list( option* head ){
 	option* temp;
+	while( head ){
+		temp = head;
+		head = head->next;
+		free( temp );
+	}
+} //end free_option_list
+
+/* free_condred_list ** TO DO: make one function to free all types of linear linked lists
+ this function frees a linked list of l_pair nodes
+*/
+void free_condred_list( l_cond* head ){
+	l_cond* temp;
 	while( head ){
 		temp = head;
 		head = head->next;

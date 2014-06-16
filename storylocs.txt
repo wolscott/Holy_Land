@@ -9,7 +9,7 @@
 [q
 
 @start 1
-[b You are standing in the road outside a small village near your home#]
+[? smithy chicken 30][b You are standing in the road outside a small village near your home#]
 [>coop1 Go to the chicken coop#]
 [>kitchen go inside to the kitchen#]
 [>smithy go to the smithy#]
