@@ -9,6 +9,7 @@
 [q
 
 @start 1
+[n Start]
 [? smithy chicken 30][b You are standing in the road outside a small village near your home#]
 [>coop1 Go to the chicken coop#]
 [>kitchen go inside to the kitchen#]
@@ -22,7 +23,7 @@
 [q
 
 @coop1 1
-[? chicken 1 fixed_coop][b You are standing in front the chicken coop. It is in need of repairs#]
+[? fixed_coop chicken 1][b You are standing in front the chicken coop. It is in need of repairs#]
 [> fixing_coop fix the chicken coop#]
 [>start go back to the road#]
 0
@@ -53,14 +54,14 @@
 0
 
 [q]
-@7 1 you  made it to heaven!#
-1 5 go back to church(why?)#
+@7 1 [b you  made it to heaven!]#
+[>1 5 go back to church(why?)]#
 0
 
 [q]
 &2
 
-@1 The first location of year 2!#
-1 1 stay here#
+@1 [b The first location of year 2!]#
+[>1 1 stay here]#
 
 [q]0

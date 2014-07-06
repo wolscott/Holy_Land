@@ -1,18 +1,22 @@
 //Moved header stuff here for easy access
 
-#define MAX_OPTIONS 5 //max number of options at a location
-#define LOC_SOURCE "storylocs.txt"
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_OPTIONS 5 //max number of options at a location. BEING PHASED OUT, linked-list implementations allows unlimited options
+#define LOC_SOURCE "storylocs.txt" //should add optional command line parameter for this
 #define BODY_LEN 1000
 #define MAX_OPT_BODY 1000
-#define MAX_LOCATIONS 10 //phasing out, replaced with MAX_YEARS
+#define MAX_LOCATIONS 10 //phasing out, replaced with MAX_YEARS. NOT USED
 #define KEY_LEN 10
-#define MAX_EFFECTS 3 //number of exp effects that a location can have
-#define MAX_CONDREDS 3 //number of conditional redirects that a location can have
-#define EXP_NUM 5 
+#define MAX_EFFECTS 3 //number of exp effects that a location can have. PHASING OUT
+#define MAX_CONDREDS 3 //number of conditional redirects that a location can have. PHASING OUT
+#define EXP_NUM 5 // PHASING OUT
 #define MAX_LOCS 20 //max locations per block
-#define MAX_YEARS 5 //should be like a billion, but small for testing purposes
-#define LOC_NAME_LEN 32
-#define GLOB_CONDREDS 8 //number of global condreds
+#define MAX_YEARS 5 //should be like a billion, but small for testing purposes. NOT USED
+#define LOC_NAME_LEN 32 //max length of location name
+#define DISP_NAME_LEN 32 //max length of display name
+#define GLOB_CONDREDS 8 //number of global condreds. PHASING OUT
 
 /*the 'option' structure is used to for storing and displaying menu options
  */
@@ -68,6 +72,9 @@ typedef struct l_cond_ {
  */
 typedef struct {
 	int block; //the block this location takes place
+	int has_disp_name; //flag for existance of display name
+	int show_name; //flag as to whether the display name should be shown
+	char disp_name[DISP_NAME_LEN]; //name to be displayed
 	int loc_id; //unique location id, used for moving between locations
 	char name[LOC_NAME_LEN]; //replacing loc_id which is being phased out
 	l_pair** effects; //new linked list implementation
@@ -93,7 +100,46 @@ typedef struct {
 	char loc_name[LOC_NAME_LEN];
 	location* go_to_ptr;
 } loc_link;
-//prototypes
+
+
+typedef struct loc_mapper_{
+	location* loc;
+	struct loc_mapper_* next;
+}loc_mapper;
+
+//prototypes for hl_loader.c
+int load_story();
+location* parse_loc( FILE* );
+loc_mapper* add( loc_mapper*, location* );
+loc_mapper* append( loc_mapper*, location* );
+loc_mapper* insert( loc_mapper*, location* );
+void print_loc( location* );
+void print_all( loc_mapper* head );
+void build_loc_map_array( location**, loc_mapper*, int );
+void print_array( location**, int );
+location* get_loc_from_name( location** loc_array, int start, int end, char* name );
+void free_list( loc_mapper* );
+void append_pair( l_pair**, l_pair* );
+void append_option( option**, option* );
+void append_condred( l_cond**, l_cond* );
+void free_locs( location**, int num );
+void free_location( location* );
+void free_pair_list( l_pair* );
+void free_option_list( option* );
+void free_condred_list( l_cond* );
+void find_targets( location** loc_array, int len );
+void set_option_targets( option** head, location** loc_array, int len );
+void set_condred_targets( l_cond** head, location** loc_array, int len );
+void display_location( location* loc );
+
+//parse family of functions
+void get_effect( FILE*, location* );
+void get_body( FILE*, location* );
+void get_condred( FILE*, location* );
+void get_option( FILE*, location* );
+void get_disp_name( FILE*, location* );
+// OLD prototypes
+/*
 //location get_location( FILE* locations, long address, loc_map map[MAX_LOCATIONS], pair exp[EXP_NUM] );
 void get_location( FILE* l_file, location* );
 void print_location( location* ltp );
@@ -118,5 +164,5 @@ location* get_link( char loc_name[LOC_NAME_LEN], loc_link link_map[MAX_LOCS]);
 location* load_save( FILE* savefile, pair exp[EXP_NUM], loc_link link_map[MAX_LOCS] );
 int get_save_block( FILE* savefile );
 void get_glob_condreds( FILE* l_file, cond condreds[GLOB_CONDREDS] );
-
+*/
 //end header file

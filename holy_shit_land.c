@@ -34,12 +34,14 @@ void free_condred_list( l_cond* );
 void find_targets( location** loc_array, int len );
 void set_option_targets( option** head, location** loc_array, int len );
 void set_condred_targets( l_cond** head, location** loc_array, int len );
+void display_location( location* loc );
 
 //parse family of functions
 void get_effect( FILE*, location* );
 void get_body( FILE*, location* );
 void get_condred( FILE*, location* );
 void get_option( FILE*, location* );
+void get_disp_name( FILE*, location* );
 
 int main(){
 	FILE* l_file = fopen( LOC_SOURCE, "r" );
@@ -51,6 +53,8 @@ int main(){
 		if( c == '@' ){
 			num_locs++;
 			location* new_loc = parse_loc( l_file );	
+			//printf( "New Location: \n" ); //debugging
+			//print_loc( new_loc ); //debugging
 			head = insert( head, new_loc );
 		}
 	}
@@ -71,7 +75,8 @@ int main(){
 void print_array( location** array, int num ){
 	int i;
 	for( i = 0; i < num; i++ ){
-		print_loc( array[i] );
+		//print_loc( array[i] );
+		display_location( array[i] );
 	}
 } //end print_array
 
@@ -100,6 +105,7 @@ location* parse_loc( FILE* l_file ){
 	*(new_loc->options) = NULL;
 	new_loc->condreds = malloc( sizeof( l_cond* ));
 	*(new_loc->condreds) = NULL;
+	new_loc->has_disp_name = 0; //init no display name
 	fscanf( l_file, "%s", new_loc->name );
 	char c = 'a';
 	char tag[10];
@@ -122,6 +128,9 @@ location* parse_loc( FILE* l_file ){
 					return new_loc;
 				case '?':
 					parse = get_condred;
+					break;
+				case 'n':
+					parse = get_disp_name;
 					break;
 				default:
 					parse = NULL;
@@ -158,6 +167,22 @@ void get_body( FILE* l_file, location* loc ){
 		c = fgetc( l_file );
 	}
 } //end get_body
+
+/* get_disp_name **
+ THIS FUNCTION MUST BE VOID AND TAKE A FILE POINTER AND A LOCATION POINTER
+ it is the target of a function pointer.
+*/
+void get_disp_name( FILE* l_file, location* loc ){
+	loc->has_disp_name = 1;
+	loc->show_name = 1; //testing only, to be removed
+	char c = fgetc( l_file );
+	char* pos = loc->disp_name;
+	int i = 0;
+	while( c != ']' && i++ < DISP_NAME_LEN ){
+		*pos++ = c;
+		c = fgetc( l_file );
+	}
+} //end get_disp_name
 
 /* get_condred **
  THIS FUNCTION MUST BE VOID AND TAKE A FILE POINTER AND A LOCATION POINTER
@@ -458,3 +483,34 @@ void free_condred_list( l_cond* head ){
 		free( temp );
 	}
 } //end free_option_list
+
+/* display_location **
+ this function is the function that will be used by the game
+ to display locations to the player. This function should be
+ moved out of the loader file
+*/
+void display_location( location* loc ){
+	/*printf( "\nName: %s Address: %p\n\tEffects:\n", loc->name, loc );
+	l_pair* effect = *(loc->effects);
+	while( effect != NULL ){
+		printf( "\t%s %d\n", effect->keyword, effect->value );
+		effect = effect->next;
+	}
+	printf( "\tConditional Redirects:\n" );
+	l_cond* condred = *(loc->condreds);
+	while( condred != NULL ){
+		printf( "\t%s %d %s %p\n", condred->keyword, condred->value, condred->new_go, condred->new_go_ptr );
+		condred = condred->next;
+	}*/
+	if( loc->has_disp_name && loc->show_name ){
+		printf( "\n%s\n", loc->disp_name );
+	}
+	printf( "\n%s\n", loc->body );
+	option* option = *(loc->options);
+	int opt_num = 0;
+	while( option != NULL ){
+		printf( "\t%d\t%s\n", ++opt_num, option->body );
+		option = option->next;
+	}
+	
+} //end display_location
