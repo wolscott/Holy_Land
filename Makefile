@@ -8,3 +8,6 @@ hl_loader.o: hl_loader.c holy_land.h
 
 hl_frontend.o: hl_frontend.c holy_land.h
 	gcc hl_frontend.c -g -c
+
+clean:
+	rm -rf *.o hello
