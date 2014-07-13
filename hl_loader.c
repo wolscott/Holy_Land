@@ -164,6 +164,7 @@ void get_disp_name( FILE* l_file, location* loc ){
 		*pos++ = c;
 		c = fgetc( l_file );
 	}
+	*pos = '\0';
 } //end get_disp_name
 
 /* get_condred **

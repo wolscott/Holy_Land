@@ -2,6 +2,7 @@
 //global mark 'H' set here in vim
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define MAX_OPTIONS 5 //max number of options at a location. BEING PHASED OUT, linked-list implementations allows unlimited options
 #define LOC_SOURCE "holy_land_story.txt" //should add optional command line parameter for this
@@ -17,6 +18,7 @@
 #define LOC_NAME_LEN 32 //max length of location name
 #define DISP_NAME_LEN 32 //max length of display name
 #define GLOB_CONDREDS 8 //number of global condreds. PHASING OUT
+#define MAX_INPUT 32 //max characters read from user
 
 /*the 'option' structure is used to for storing and displaying menu options
  */
@@ -132,6 +134,11 @@ void set_option_targets( option** head, location** loc_array, int len );
 void set_condred_targets( l_cond** head, location** loc_array, int len );
 void display_location( location* loc );
 location* get_fresh_loc( void );
+int process_input( char* input, location** curloc );
+void process_location( location* curloc, l_pair* status );
+void do_effects( l_pair* loc_e_head, l_pair* player_e_head );
+void handle_effect( l_pair* effect, l_pair* player_e_head );
+
 //parse family of functions
 void get_effect( FILE*, location* );
 void get_body( FILE*, location* );

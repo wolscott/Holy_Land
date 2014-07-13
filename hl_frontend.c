@@ -15,20 +15,39 @@ allowing them to start a new game or load an in progress one.
 int main(){ //global mark 'F' set here in vim
 	int num_locs = 0;
 	location** loc_array = load_story( &num_locs ); //in hl_loader.c
-	location* main_menu = get_loc_from_name( loc_array, 0, num_locs, "default" );
-	display_location( main_menu );
-	free_loaded( loc_array, num_locs );
+	location* curloc = get_loc_from_name( loc_array, 0, num_locs, "default" );
+	int game = 1; //placeholder, replace this with a keyword
+	char input[MAX_INPUT];
+	l_pair* status_list = NULL;
+	//main io loop
+	while( game == 1 ){
+		process_location( curloc, status_list );
+		display_location( curloc );
+		scanf( "%s", input, MAX_INPUT );
+		game = process_input( input, &curloc );	
+	}
+	free_loaded( loc_array, num_locs ); //final step: free all allocated memory.
 }//main
 
-/* proctess_location **
- this function will check condreds, update keywords based
- on effects, and create the current list of valid options.
- Since conditional options are not planned yet, this will
- be all options.
+/* process_input **
+ this function parses the user's input for commands
+ and performs the actions instructed
 */
-void process_location( location* loc ){
-	
-} //end process_location
+int process_input( char* input, location** curloc ){
+	if( strcmp( input, "quit" ) == 0 ){
+		return 0;
+	}
+	int i;
+	if( isdigit( input[0] )){
+		option* selection = *(*curloc)->options;		
+		for( i = 1; i < atoi( input ) && selection->next != NULL; i++ ){
+			selection = selection->next;	 
+		}
+		*curloc = selection->target;			
+	}
+	return 1;
+}
+
 
 /* display_location **
  this function is the function that will be used by the game
