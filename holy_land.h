@@ -1,10 +1,10 @@
 //Moved header stuff here for easy access
-
+//global mark 'H' set here in vim
 #include <stdio.h>
 #include <stdlib.h>
 
 #define MAX_OPTIONS 5 //max number of options at a location. BEING PHASED OUT, linked-list implementations allows unlimited options
-#define LOC_SOURCE "storylocs.txt" //should add optional command line parameter for this
+#define LOC_SOURCE "holy_land_story.txt" //should add optional command line parameter for this
 #define BODY_LEN 1000
 #define MAX_OPT_BODY 1000
 #define MAX_LOCATIONS 10 //phasing out, replaced with MAX_YEARS. NOT USED
@@ -70,7 +70,7 @@ typedef struct l_cond_ {
  * information from the locations.txt data file containing the game's story, and 
  * the possible gameplay options
  */
-typedef struct {
+typedef struct location_ {
 	int block; //the block this location takes place
 	int has_disp_name; //flag for existance of display name
 	int show_name; //flag as to whether the display name should be shown
@@ -90,13 +90,13 @@ typedef struct {
  * in the file. an array of loc_map structs is generated at the begginning 
  * of main to allow the program to jump to parts of the file as needed
  */
-typedef struct {
+typedef struct loc_map_{
 	int loc_id;
 	char loc_name[LOC_NAME_LEN]; //replacing loc_id
 	long offset;
 }loc_map;
 
-typedef struct {
+typedef struct loc_link_{
 	char loc_name[LOC_NAME_LEN];
 	location* go_to_ptr;
 } loc_link;
@@ -108,7 +108,7 @@ typedef struct loc_mapper_{
 }loc_mapper;
 
 //prototypes for hl_loader.c
-int load_story();
+location** load_story( int* );
 location* parse_loc( FILE* );
 loc_mapper* add( loc_mapper*, location* );
 loc_mapper* append( loc_mapper*, location* );
@@ -131,7 +131,7 @@ void find_targets( location** loc_array, int len );
 void set_option_targets( option** head, location** loc_array, int len );
 void set_condred_targets( l_cond** head, location** loc_array, int len );
 void display_location( location* loc );
-
+location* get_fresh_loc( void );
 //parse family of functions
 void get_effect( FILE*, location* );
 void get_body( FILE*, location* );

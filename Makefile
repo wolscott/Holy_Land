@@ -11,3 +11,6 @@ hl_frontend.o: hl_frontend.c holy_land.h
 
 clean:
 	rm -rf *.o hello
+
+check:
+	-valgrind -v --tool=memcheck --leak-check=yes --track-origins=yes ./hl
