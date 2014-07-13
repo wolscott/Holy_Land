@@ -4,45 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "holy_land.h" //this head is required for everythhing
-//#include "holy_land.c" //i need some functions from this broken ass code
-
-/*
-typedef struct loc_mapper_{
-	location* loc;
-	struct loc_mapper_* next;
-}loc_mapper;
-
-
-location* parse_loc( FILE* );
-loc_mapper* add( loc_mapper*, location* );
-loc_mapper* append( loc_mapper*, location* );
-loc_mapper* insert( loc_mapper*, location* );
-void print_loc( location* );
-void print_all( loc_mapper* head );
-void build_loc_map_array( location**, loc_mapper*, int );
-void print_array( location**, int );
-location* get_loc_from_name( location** loc_array, int start, int end, char* name );
-void free_list( loc_mapper* );
-void append_pair( l_pair**, l_pair* );
-void append_option( option**, option* );
-void append_condred( l_cond**, l_cond* );
-void free_locs( location**, int num );
-void free_location( location* );
-void free_pair_list( l_pair* );
-void free_option_list( option* );
-void free_condred_list( l_cond* );
-void find_targets( location** loc_array, int len );
-void set_option_targets( option** head, location** loc_array, int len );
-void set_condred_targets( l_cond** head, location** loc_array, int len );
-void display_location( location* loc );
-
-//parse family of functions
-void get_effect( FILE*, location* );
-void get_body( FILE*, location* );
-void get_condred( FILE*, location* );
-void get_option( FILE*, location* );
-void get_disp_name( FILE*, location* );
-*/
 
 /* load_story **
  this function is called from hl_frontend.c
@@ -69,7 +30,7 @@ location** load_story( int* num_locs ){ // global mark 'L' set here in vim
 	location** loc_map_array = malloc( sizeof(location*) * *num_locs);
 	build_loc_map_array( loc_map_array, head, *num_locs );
 	find_targets( loc_map_array, *num_locs );
-	print_array( loc_map_array, *num_locs );
+//	print_array( loc_map_array, *num_locs );
 	free_list( head );
 	//printf( "sofarsogood" );
 	return loc_map_array;
@@ -505,33 +466,3 @@ void free_condred_list( l_cond* head ){
 	}
 } //end free_option_list
 
-/* display_location **
- this function is the function that will be used by the game
- to display locations to the player. This function should be
- moved out of the loader file
-*/
-void display_location( location* loc ){
-	/*printf( "\nName: %s Address: %p\n\tEffects:\n", loc->name, loc );
-	l_pair* effect = *(loc->effects);
-	while( effect != NULL ){
-		printf( "\t%s %d\n", effect->keyword, effect->value );
-		effect = effect->next;
-	}
-	printf( "\tConditional Redirects:\n" );
-	l_cond* condred = *(loc->condreds);
-	while( condred != NULL ){
-		printf( "\t%s %d %s %p\n", condred->keyword, condred->value, condred->new_go, condred->new_go_ptr );
-		condred = condred->next;
-	}*/
-	if( loc->has_disp_name && loc->show_name ){
-		printf( "\n%s\n", loc->disp_name );
-	}
-	printf( "\n%s\n", loc->body );
-	option* option = *(loc->options);
-	int opt_num = 0;
-	while( option != NULL ){
-		printf( "\t%d\t%s\n", ++opt_num, option->body );
-		option = option->next;
-	}
-	
-} //end display_location

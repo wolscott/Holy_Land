@@ -1,11 +1,12 @@
-?time 5 7
+// global mark 'S' here in vim
 
-&1
-@menu 1
-[b Welcome to Holy Land#]
+@default
+[b Welcome to Holy Land.
+Enter 1 to start a new game. 
+Enter "Load <save file>" at any time to load a previously started game. 
+Save you progress at any time by entering "Save <save file>"]
 
-[>start Start Game#]
-0
+[>start New Game]
 [q
 
 @start 1
