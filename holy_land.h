@@ -135,9 +135,10 @@ void set_condred_targets( l_cond** head, location** loc_array, int len );
 void display_location( location* loc );
 location* get_fresh_loc( void );
 int process_input( char* input, location** curloc );
-void process_location( location* curloc, l_pair* status );
-void do_effects( l_pair* loc_e_head, l_pair* player_e_head );
-void handle_effect( l_pair* effect, l_pair* player_e_head );
+void process_location( location** curloc, l_pair** status );
+void do_effects( l_pair** effects, l_pair** player_e_head );
+void handle_effect( l_pair* effect, l_pair** player_e_head );
+location* do_condreds( l_cond** condreds, l_pair** player_e_head );
 
 //parse family of functions
 void get_effect( FILE*, location* );

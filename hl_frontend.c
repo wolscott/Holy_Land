@@ -21,7 +21,7 @@ int main(){ //global mark 'F' set here in vim
 	l_pair* status_list = NULL;
 	//main io loop
 	while( game == 1 ){
-		process_location( curloc, status_list );
+		process_location( &curloc, &status_list );
 		display_location( curloc );
 		scanf( "%s", input, MAX_INPUT );
 		game = process_input( input, &curloc );	

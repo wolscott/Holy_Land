@@ -10,20 +10,50 @@
  file with the rest of the mechanical aspects that shouldn't
  be in the frontend.
 */
-void process_location( location* loc, l_pair* status ){
-	do_effects( *loc->effects, status );
+void process_location( location** loc, l_pair** status ){
+	location* go_to = do_condreds( (*loc)->condreds, status );
+	if( go_to != *loc && go_to != NULL ){
+		*loc = go_to;
+		process_location( loc, status );
+	} else {
+		//*loc = go_to;
+		do_effects( (*loc)->effects, status );
+	}
 } //end process_location
 
-void do_effects( l_pair* loc_e_head, l_pair* player_e_head ){
-	l_pair* effect = loc_e_head;
+location* do_condreds( l_cond** condreds, l_pair** status ){
+	if( condreds == NULL ){
+		return NULL;
+	}
+	l_cond* curcond = *condreds;
+	l_pair* curstat = *status;
+	while( curcond != NULL ){ //for each condred
+		while( curstat != NULL ){ //for each status
+			if( strcmp( curcond->keyword, curstat->keyword ) == 0 ){ //if there's a keyword match
+				if( curstat->value >= curcond->value ){ //if the value is met
+					return curcond->new_go_ptr; //return the new location pointer
+				}
+			}
+			curstat = curstat->next;
+		}
+		curcond = curcond->next;
+	}
+	return NULL;
+}
+
+void do_effects( l_pair** effects, l_pair** player_e_head ){
+	if( effects == NULL ){
+		return;
+	}
+	l_pair* effect = *effects;
 	while( effect != NULL ){ //systematically handle all of the location's effects
 		handle_effect( effect, player_e_head );
 		effect = effect->next;
 	}
 }
 
-void handle_effect( l_pair* effect, l_pair* player_e_head ){
-	l_pair* curstat = player_e_head;
+void handle_effect( l_pair* effect, l_pair** player_e_head ){
+	l_pair* curstat = *player_e_head;
 	while( curstat != NULL ){
 		if( strcmp( curstat->keyword, effect->keyword ) == 0 ){ //if there is a keyword match	
 			curstat->value += effect->value;
@@ -37,5 +67,5 @@ void handle_effect( l_pair* effect, l_pair* player_e_head ){
 	new_effect->next = NULL;
 	strcpy( new_effect->keyword, effect->keyword );
 	new_effect->value = effect->value;
-	append_pair( &player_e_head, new_effect );
+	append_pair( player_e_head, new_effect );
 }
